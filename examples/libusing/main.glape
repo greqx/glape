@@ -1,0 +1,16 @@
+get mathlib
+
+x:int = mathlib.square(5)
+print(x)
+
+y:int = mathlib.cube(3)
+print(y)
+
+z:int = mathlib.clamp(15, 0, 10)
+print(z)
+
+a:int = mathlib.max(7, 12)
+print(a)
+
+b:int = mathlib.min(7, 12)
+print(b)

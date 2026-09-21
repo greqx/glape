@@ -1,0 +1,12 @@
+define square(x:int) >> int:
+  return x * x
+
+define cube(x:int) >> int:
+  return x * x * x
+
+define clamp(val:int, lo:int, hi:int) >> int:
+  if val < lo:
+    return lo
+  if val > hi:
+    return hi
+  return val

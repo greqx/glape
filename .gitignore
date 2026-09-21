@@ -1,0 +1,8 @@
+# binaries
+build/
+*.o
+
+# ide
+.vscode/
+.idea/
+*.swp

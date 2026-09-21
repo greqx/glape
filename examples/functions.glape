@@ -1,0 +1,29 @@
+# basic function
+define add(a:int, b:int) >> int:
+  return a + b
+
+define multiply(a:int, b:int) >> int:
+  return a * b
+
+define greet(name:str):
+  print(name)
+
+# calls
+x:int = add(3, 4)
+print(x)
+
+y:int = multiply(3, 4)
+print(y)
+
+z:int = add(x, y)
+print(z)
+
+greet("glape")
+
+# function using another function
+define add_then_double(a:int, b:int) >> int:
+  x:int = add(a, b)
+  return x * 2
+
+result:int = add_then_double(3, 4)
+print(result)

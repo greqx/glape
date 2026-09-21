@@ -1,0 +1,20 @@
+# while loop
+x:int = 3
+loop x > 0:
+  print(x)
+  x = x - 1
+
+# range exclusive
+loop i in 1..4:
+  print(i)
+
+# range inclusive
+loop i in 1..=4:
+  print(i)
+
+# nested
+y:int = 2
+loop y > 0:
+  loop i in 1..=2:
+    print(i)
+  y = y - 1
