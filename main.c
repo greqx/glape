@@ -8,6 +8,7 @@
 #include "virtual/compiler.h"
 #include "virtual/vm.h"
 #include "virtual/gdl.h"
+#include "virtual/gffi.h"
 #include "daemon/daemon.h"
 
 #define GLAPE_VERSION "1.0-beta"
@@ -146,9 +147,31 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+    if (strcmp(argv[1], "gffi-dump") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "\033[91merror:\033[0m usage: glape gffi-dump <file.gffi>\n");
+            return 1;
+        }
+        GffiFile *gf = gffi_parse(argv[2]);
+        if (!gf) return 1;
+        printf("functions: %u\n\n", gf->count);
+        for (uint32_t i = 0; i < gf->count; i++) {
+            GffiFunc *fn = &gf->funcs[i];
+            printf("  %s", fn->name);
+            if (strcmp(fn->name, fn->so_symbol) != 0)
+                printf(" (= %s)", fn->so_symbol);
+            printf("(");
+            for (uint32_t j = 0; j < fn->arg_count; j++) {
+                printf("%s", gffi_type_name(fn->args[j].type));
+                if (j + 1 < fn->arg_count) printf(", ");
+            }
+            printf(") >> %s\n", gffi_type_name(fn->ret));
+        }
+        gffi_free(gf);
+        return 0;
+    }
     if (strcmp(argv[1], "gdl-dump") == 0) {
         if (argc < 3) {
-            fprintf(stderr, "\033[91merror:\033[0m usage: glape gdl-dump <file.gdl>\n");
             return 1;
         }
         GdlLib *lib = gdl_load(argv[2]);

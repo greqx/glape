@@ -4,7 +4,7 @@ CC     = gcc
 CFLAGS = -Wall -Wextra -O2
 
 BUILD  = build
-COMMON = frontend/lexer.c frontend/parser.c virtual/bytecode.c virtual/compiler.c virtual/vm.c virtual/gdl.c
+COMMON = frontend/lexer.c frontend/parser.c virtual/bytecode.c virtual/compiler.c virtual/vm.c virtual/gdl.c virtual/gffi.c
 
 all: $(BUILD)/glape $(BUILD)/glape-daemon
 
