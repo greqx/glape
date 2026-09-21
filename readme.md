@@ -43,5 +43,5 @@ build/glape-daemon stop
 ```
 
 ## License
-Apache License 2.0 - see LICENSE
+Licensed under Apache License 2.0. See [license.txt](license.txt).<br>
 Copyright (c) 2026 greqx and Contributors
