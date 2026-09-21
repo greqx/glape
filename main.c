@@ -9,6 +9,7 @@
 #include "virtual/vm.h"
 #include "virtual/gdl.h"
 #include "virtual/gffi.h"
+#include "virtual/compiler.h"
 #include "daemon/daemon.h"
 
 #define GLAPE_VERSION "1.0-beta"
@@ -176,11 +177,30 @@ int main(int argc, char *argv[]) {
         }
         GdlLib *lib = gdl_load(argv[2]);
         if (!lib) return 1;
-        printf("modules: %u\n\n", lib->module_count);
-        for (uint32_t i = 0; i < lib->module_count; i++) {
-            printf("=== module '%s' ===\n", lib->modules[i].name);
-            chunk_disasm(lib->modules[i].chunk);
-            printf("\n");
+        if (lib->ffi) {
+            printf("type: FFI\n");
+            printf("so: %s\n", lib->ffi->so_path);
+            printf("symbols: %u\n\n", lib->ffi->symbol_count);
+            for (uint32_t i = 0; i < lib->ffi->symbol_count; i++) {
+                FfiSymbol *s = &lib->ffi->symbols[i];
+                printf("  %s", s->glape_name);
+                if (strcmp(s->glape_name, s->so_symbol) != 0)
+                    printf(" (= %s)", s->so_symbol);
+                printf("(");
+                for (uint32_t j = 0; j < s->arg_count; j++) {
+                    printf("%s", gffi_type_name((GffiType)s->arg_types[j]));
+                    if (j + 1 < s->arg_count) printf(", ");
+                }
+                printf(") >> %s\n", gffi_type_name((GffiType)s->ret_type));
+            }
+        } else {
+            printf("type: BYTECODE\n");
+            printf("modules: %u\n\n", lib->module_count);
+            for (uint32_t i = 0; i < lib->module_count; i++) {
+                printf("=== module '%s' ===\n", lib->modules[i].name);
+                chunk_disasm(lib->modules[i].chunk);
+                printf("\n");
+            }
         }
         gdl_lib_free(lib);
         return 0;
@@ -197,7 +217,8 @@ int main(int argc, char *argv[]) {
         for (int i = 2; i < argc; i++) {
             if (strcmp(argv[i], "--output") == 0 && i+1 < argc) out_path = argv[++i];
             else if (strcmp(argv[i], "-sys")    == 0) is_ffi  = 1;
-            else if (strcmp(argv[i], "--in") == 0 && i+1 < argc) i++; // reserved for -sys
+            else if (strcmp(argv[i], "--map")   == 0 && i+1 < argc) i++; // handled below
+            else if (strcmp(argv[i], "--in")    == 0 && i+1 < argc) i++;
             else if (!folder) folder = argv[i];
         }
 
@@ -207,8 +228,32 @@ int main(int argc, char *argv[]) {
         }
 
         if (is_ffi) {
-            fprintf(stderr, "\033[91merror:\033[0m -sys not yet implemented\n");
-            return 1;
+            // glape gdl -sys libfoo.so --map libfoo.gffi --output foo.gdl
+            const char *map_path = NULL;
+            for (int i = 2; i < argc; i++)
+                if (strcmp(argv[i], "--map") == 0 && i+1 < argc) map_path = argv[++i];
+
+            if (!map_path) {
+                fprintf(stderr, "\033[91merror:\033[0m -sys requires --map <file.gffi>\n");
+                return 1;
+            }
+            if (!folder) {
+                fprintf(stderr, "\033[91merror:\033[0m -sys requires <library.so>\n");
+                return 1;
+            }
+
+            GffiFile *gf = gffi_parse(map_path);
+            if (!gf) return 1;
+
+            printf("compiling FFI '%s' + '%s' -> '%s'\n", folder, map_path, out_path);
+            if (gdl_write_ffi_from_gffi(out_path, folder, gf) < 0) {
+                gffi_free(gf);
+                return 1;
+            }
+            printf("  + %u symbols\n", gf->count);
+            gffi_free(gf);
+            printf("done\n");
+            return 0;
         }
 
         printf("compiling '%s' → '%s'\n", folder, out_path);

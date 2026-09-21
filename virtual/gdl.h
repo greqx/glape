@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include "bytecode.h"
+#include "gffi.h"
 
 #define GDL_MAGIC   "GDLX"
 #define GDL_VERSION 1
@@ -20,10 +21,14 @@ typedef struct {
     Chunk *chunk;
 } GdlModule;
 
-// FFI symbol: glape name → symbol in .so
+// FFI symbol: glape name -> symbol in .so + type signature
 typedef struct {
-    char *glape_name;
-    char *so_symbol;
+    char     *glape_name;
+    char     *so_symbol;
+    uint8_t  *arg_types;   // GffiType values for each arg
+    uint32_t  arg_count;
+    uint8_t   ret_type;    // GffiType return value
+    void     *fn_ptr;      // filled at load time by dlsym
 } FfiSymbol;
 
 // loaded FFI library
@@ -54,7 +59,10 @@ GdlLib *gdl_load(const char *path);
 
 void gdl_lib_free(GdlLib *lib);
 
-// write FFI .gdl
+// write FFI .gdl from a parsed .gffi file
+int gdl_write_ffi_from_gffi(const char *path, const char *so_path, GffiFile *gf);
+
+// write FFI .gdl (legacy, simple)
 int gdl_write_ffi(const char *path, const char *so_path,
                   FfiSymbol *symbols, uint32_t count);
 

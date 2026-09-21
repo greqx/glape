@@ -6,6 +6,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include "gdl.h"
+#include "gffi.h"
 #include "compiler.h"
 #include "../frontend/lexer.h"
 #include "../frontend/parser.h"
@@ -383,10 +384,23 @@ GdlLib *gdl_load(const char *path) {
         FfiLib *ffi   = calloc(1, sizeof(FfiLib));
         ffi->so_path  = r_str(f);
         r_u32(f, &ffi->symbol_count);
-        ffi->symbols  = malloc(sizeof(FfiSymbol) * ffi->symbol_count);
+        ffi->symbols  = calloc(ffi->symbol_count, sizeof(FfiSymbol));
         for (uint32_t i = 0; i < ffi->symbol_count; i++) {
             ffi->symbols[i].glape_name = r_str(f);
             ffi->symbols[i].so_symbol  = r_str(f);
+            uint8_t ret;
+            r_u8(f, &ret);
+            ffi->symbols[i].ret_type = ret;
+            uint32_t ac;
+            r_u32(f, &ac);
+            ffi->symbols[i].arg_count = ac;
+            ffi->symbols[i].arg_types = ac > 0 ? malloc(ac) : NULL;
+            for (uint32_t j = 0; j < ac; j++) {
+                uint8_t t;
+                r_u8(f, &t);
+                ffi->symbols[i].arg_types[j] = t;
+            }
+            ffi->symbols[i].fn_ptr = NULL; // filled by dlopen at runtime
         }
         lib->ffi = ffi;
     }
@@ -410,11 +424,38 @@ void gdl_lib_free(GdlLib *lib) {
         for (uint32_t i = 0; i < lib->ffi->symbol_count; i++) {
             free(lib->ffi->symbols[i].glape_name);
             free(lib->ffi->symbols[i].so_symbol);
+            free(lib->ffi->symbols[i].arg_types);
         }
         free(lib->ffi->symbols);
         free(lib->ffi);
     }
     free(lib);
+}
+
+int gdl_write_ffi_from_gffi(const char *path, const char *so_path, GffiFile *gf) {
+    FILE *f = fopen(path, "wb");
+    if (!f) { gdl_error("cannot open output file"); return -1; }
+
+    fwrite(GDL_MAGIC, 1, 4, f);
+    w_u8(f, GDL_VERSION);
+    w_u8(f, GDL_FFI);
+    w_u8(f, 0); w_u8(f, 0);
+
+    w_str(f, so_path);
+    w_u32(f, gf->count);
+
+    for (uint32_t i = 0; i < gf->count; i++) {
+        GffiFunc *fn = &gf->funcs[i];
+        w_str(f, fn->name);
+        w_str(f, fn->so_symbol);
+        w_u8(f, (uint8_t)fn->ret);
+        w_u32(f, fn->arg_count);
+        for (uint32_t j = 0; j < fn->arg_count; j++)
+            w_u8(f, (uint8_t)fn->args[j].type);
+    }
+
+    fclose(f);
+    return 0;
 }
 
 int gdl_write_ffi(const char *path, const char *so_path,
@@ -430,6 +471,10 @@ int gdl_write_ffi(const char *path, const char *so_path,
     for (uint32_t i = 0; i < count; i++) {
         w_str(f, symbols[i].glape_name);
         w_str(f, symbols[i].so_symbol);
+        w_u8(f, 0);  // ret = void
+        w_u32(f, symbols[i].arg_count);
+        for (uint32_t j = 0; j < symbols[i].arg_count; j++)
+            w_u8(f, symbols[i].arg_types[j]);
     }
     fclose(f);
     return 0;
