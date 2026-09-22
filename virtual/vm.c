@@ -3,8 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dlfcn.h>
 #include "vm.h"
 #include "gdl.h"
+#include "gffi.h"
 
 #define COLOR_RED   "\033[91m"
 #define COLOR_WHITE "\033[97m"
@@ -342,8 +344,101 @@ static Value exec(VM *vm, uint8_t *code, uint32_t len, Scope *scope) {
                     vm_error(msg);
                 }
 
-                // find module and function
-                // fn_name format: "funcname" - search all modules
+                // FFI library - call via dlsym pointer
+                if (lib->ffi) {
+                    FfiSymbol *sym = NULL;
+                    for (uint32_t i = 0; i < lib->ffi->symbol_count; i++)
+                        if (strcmp(lib->ffi->symbols[i].glape_name, fn_name) == 0) {
+                            sym = &lib->ffi->symbols[i]; break;
+                        }
+                    if (!sym) {
+                        char msg[128];
+                        snprintf(msg, sizeof(msg),
+                            "function '%s' not found in FFI library '%s'", fn_name, lib_name);
+                        vm_error(msg);
+                    }
+                    if (argc != (uint8_t)sym->arg_count) {
+                        char msg[128];
+                        snprintf(msg, sizeof(msg),
+                            "%s.%s expects %u argument(s)", lib_name, fn_name, sym->arg_count);
+                        vm_error(msg);
+                    }
+
+                    // pop args
+                    Value args[64];
+                    for (int i = (int)argc - 1; i >= 0; i--)
+                        args[i] = pop(vm);
+
+                    // type-safe dispatch via function pointer cast
+                    // covers the most common C signatures
+                    GffiType rt = (GffiType)sym->ret_type;
+                    Value ret   = val_void();
+
+                    #define A0t ((GffiType)sym->arg_types[0])
+                    #define A1t ((GffiType)sym->arg_types[1])
+                    #define A2t ((GffiType)sym->arg_types[2])
+                    #define Ai(n) (args[n].ival)
+                    #define As(n) (args[n].type == VAL_STR ? args[n].sval : "")
+                    #define Ap(n) ((void*)(intptr_t)args[n].ival)
+
+                    if (argc == 0) {
+                        if (rt == GFFI_INT) ret = val_int(((int(*)(void))sym->fn_ptr)());
+                        else if (rt == GFFI_PTR) ret = val_int((int64_t)(intptr_t)((void*(*)(void))sym->fn_ptr)());
+                        else ((void(*)(void))sym->fn_ptr)();
+                    } else if (argc == 1) {
+                        if (A0t == GFFI_STR) {
+                            if (rt == GFFI_INT) ret = val_int(((int(*)(const char*))sym->fn_ptr)(As(0)));
+                            else if (rt == GFFI_PTR) ret = val_int((int64_t)(intptr_t)((void*(*)(const char*))sym->fn_ptr)(As(0)));
+                            else ((void(*)(const char*))sym->fn_ptr)(As(0));
+                        } else if (A0t == GFFI_INT) {
+                            if (rt == GFFI_INT) ret = val_int(((int(*)(int64_t))sym->fn_ptr)(Ai(0)));
+                            else if (rt == GFFI_PTR) ret = val_int((int64_t)(intptr_t)((void*(*)(int64_t))sym->fn_ptr)(Ai(0)));
+                            else ((void(*)(int64_t))sym->fn_ptr)(Ai(0));
+                        } else if (A0t == GFFI_PTR) {
+                            if (rt == GFFI_INT) ret = val_int(((int(*)(void*))sym->fn_ptr)(Ap(0)));
+                            else if (rt == GFFI_PTR) ret = val_int((int64_t)(intptr_t)((void*(*)(void*))sym->fn_ptr)(Ap(0)));
+                            else ((void(*)(void*))sym->fn_ptr)(Ap(0));
+                        }
+                    } else if (argc == 2) {
+                        if (A0t == GFFI_STR && A1t == GFFI_STR) {
+                            if (rt == GFFI_INT) ret = val_int(((int(*)(const char*,const char*))sym->fn_ptr)(As(0),As(1)));
+                            else if (rt == GFFI_PTR) ret = val_int((int64_t)(intptr_t)((void*(*)(const char*,const char*))sym->fn_ptr)(As(0),As(1)));
+                            else ((void(*)(const char*,const char*))sym->fn_ptr)(As(0),As(1));
+                        } else if (A0t == GFFI_PTR && A1t == GFFI_INT) {
+                            if (rt == GFFI_INT) ret = val_int(((int(*)(void*,int64_t))sym->fn_ptr)(Ap(0),Ai(1)));
+                            else ((void(*)(void*,int64_t))sym->fn_ptr)(Ap(0),Ai(1));
+                        } else if (A0t == GFFI_INT && A1t == GFFI_INT) {
+                            if (rt == GFFI_INT) ret = val_int(((int(*)(int64_t,int64_t))sym->fn_ptr)(Ai(0),Ai(1)));
+                            else ((void(*)(int64_t,int64_t))sym->fn_ptr)(Ai(0),Ai(1));
+                        } else if (A0t == GFFI_STR && A1t == GFFI_INT) {
+                            if (rt == GFFI_INT) ret = val_int(((int(*)(const char*,int64_t))sym->fn_ptr)(As(0),Ai(1)));
+                            else ((void(*)(const char*,int64_t))sym->fn_ptr)(As(0),Ai(1));
+                        }
+                    } else if (argc == 3) {
+                        if (A0t == GFFI_PTR && A1t == GFFI_INT && A2t == GFFI_STR) {
+                            if (rt == GFFI_INT) ret = val_int(((int(*)(void*,int64_t,const char*))sym->fn_ptr)(Ap(0),Ai(1),As(2)));
+                            else ((void(*)(void*,int64_t,const char*))sym->fn_ptr)(Ap(0),Ai(1),As(2));
+                        } else if (A0t == GFFI_PTR && A1t == GFFI_INT && A2t == GFFI_INT) {
+                            if (rt == GFFI_INT) ret = val_int(((int(*)(void*,int64_t,int64_t))sym->fn_ptr)(Ap(0),Ai(1),Ai(2)));
+                            else ((void(*)(void*,int64_t,int64_t))sym->fn_ptr)(Ap(0),Ai(1),Ai(2));
+                        } else if (A0t == GFFI_INT && A1t == GFFI_PTR && A2t == GFFI_INT) {
+                            if (rt == GFFI_INT) ret = val_int(((int(*)(int64_t,void*,int64_t))sym->fn_ptr)(Ai(0),Ap(1),Ai(2)));
+                            else ((void(*)(int64_t,void*,int64_t))sym->fn_ptr)(Ai(0),Ap(1),Ai(2));
+                        }
+                    }
+
+                    #undef A0t
+                    #undef A1t
+                    #undef A2t
+                    #undef Ai
+                    #undef As
+                    #undef Ap
+
+                    push(vm, ret);
+                    break;
+                }
+
+                // bytecode library - search all modules
                 GlapeFunc *fn     = NULL;
                 Chunk     *fn_chunk = NULL;
                 for (uint32_t m = 0; m < lib->module_count; m++) {

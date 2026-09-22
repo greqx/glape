@@ -5,6 +5,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <dlfcn.h>
 #include "gdl.h"
 #include "gffi.h"
 #include "compiler.h"
@@ -402,6 +403,34 @@ GdlLib *gdl_load(const char *path) {
             }
             ffi->symbols[i].fn_ptr = NULL; // filled by dlopen at runtime
         }
+
+        // open the .so and resolve all symbols
+        ffi->dl_handle = dlopen(ffi->so_path, RTLD_LAZY | RTLD_GLOBAL);
+        if (!ffi->dl_handle) {
+            // try just the filename (let linker find it)
+            const char *basename = strrchr(ffi->so_path, '/');
+            if (basename)
+                ffi->dl_handle = dlopen(basename + 1, RTLD_LAZY | RTLD_GLOBAL);
+        }
+        if (!ffi->dl_handle) {
+            fprintf(stderr,
+                "\033[91merror:\033[0m cannot load '%s': %s\n",
+                ffi->so_path, dlerror());
+            gdl_lib_free(lib);
+            fclose(f);
+            return NULL;
+        }
+        for (uint32_t i = 0; i < ffi->symbol_count; i++) {
+            ffi->symbols[i].fn_ptr = dlsym(ffi->dl_handle, ffi->symbols[i].so_symbol);
+            if (!ffi->symbols[i].fn_ptr) {
+                fprintf(stderr,
+                    "\033[91merror:\033[0m symbol '%s' not found in '%s'\n",
+                    ffi->symbols[i].so_symbol, ffi->so_path);
+                gdl_lib_free(lib);
+                fclose(f);
+                return NULL;
+            }
+        }
         lib->ffi = ffi;
     }
 
@@ -420,6 +449,7 @@ void gdl_lib_free(GdlLib *lib) {
     }
     free(lib->modules);
     if (lib->ffi) {
+        if (lib->ffi->dl_handle) dlclose(lib->ffi->dl_handle);
         free(lib->ffi->so_path);
         for (uint32_t i = 0; i < lib->ffi->symbol_count; i++) {
             free(lib->ffi->symbols[i].glape_name);
