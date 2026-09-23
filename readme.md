@@ -12,12 +12,12 @@ print(x)
 - **Low memory** - striving for minimal RAM consumption.
 - **Unix only** - no portability overhead, built for Linux and macOS.
 
-<!-- ## Website and documentation
-A base information and download language: 
-[.com/glape/](https://greqx.github.com/glape)
+## Website and documentation
+A base information and download language:
+[greqx.github.io/glape](https://greqx.github.io/glape)
 
 Documentation of using:
-[.com/glape/docs](https://greqx.github.com/glape/docs) -->
+[greqx.github.io/glape/docs](https://greqx.github.io/glape/docs)
 
 ## Build
 Use `make` command. Binaries land in `build/`:
@@ -43,5 +43,5 @@ build/glape-daemon stop
 ```
 
 ## License
-Licensed under Apache License 2.0. See [license.txt](license.txt).<br>
+Apache License 2.0 - see LICENSE
 Copyright (c) 2026 greqx and Contributors

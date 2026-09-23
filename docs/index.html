@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glape</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #ffffff;
+    --text:    #1a1a1a;
+    --muted:   #6b6b6b;
+    --border:  #e4e4e4;
+    --code-bg: #f5f5f5;
+    --max:     640px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    padding: 0 24px;
+  }
+
+  .wrap {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 64px 0 120px;
+  }
+
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 72px;
+  }
+
+  .logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 24px;
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 48px;
+  }
+
+  .hero-code {
+    margin: 0 0 64px;
+    background: var(--code-bg);
+    border-radius: 6px;
+    padding: 24px 28px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 1.9;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  .c-muted { color: var(--muted); }
+  .c-key   { color: #0057b8; }
+  .c-str   { color: #277c00; }
+  .c-num   { color: #b84800; }
+  .c-fn    { color: #6600cc; }
+
+  section {
+    margin-bottom: 52px;
+  }
+
+  h2 {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  p {
+    margin-bottom: 14px;
+  }
+
+  .install {
+    background: var(--code-bg);
+    border-radius: 6px;
+    padding: 14px 18px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    margin-bottom: 12px;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  a {
+    color: var(--text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  a:hover { color: var(--muted); }
+
+  section:last-of-type {
+    margin-bottom: 0;
+  }
+
+  section p:last-child {
+    margin-bottom: 0;
+  }
+
+  footer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media (max-width: 480px) {
+    h1 { font-size: 26px; }
+    .nav-links { gap: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav>
+    <a class="logo" href="#">glape</a>
+    <div class="nav-links">
+      <a href="docs">Documentation</a>
+      <a href="https://github.com/greqx/glape">GitHub</a>
+    </div>
+  </nav>
+
+  <h1>A minimal scripting language for Unix.</h1>
+
+  <div class="hero-code"><span class="c-muted"># types are required, blocks use indentation</span>
+x<span class="c-muted">:int</span> = <span class="c-num">5</span> + <span class="c-num">3</span>
+<span class="c-key">immut</span> name<span class="c-muted">:str</span> = <span class="c-str">"glape"</span>
+
+<span class="c-key">loop</span> i <span class="c-key">in</span> <span class="c-num">1</span>..<span class="c-num">=3</span>:
+  <span class="c-fn">print</span>(i)</div>
+
+  <section>
+    <h2>Why Glape</h2>
+    <p>Most scripting languages carry decades of legacy. Glape starts from nothing — a small binary, a bytecode VM, a library system that distributes compiled binaries, and direct FFI to C without an interpreter layer in between.</p>
+    <p>It is designed for automation scripts that run often, load fast, and stay out of the way.</p>
+  </section>
+
+  <section>
+    <h2>Get started</h2>
+    <p>Build from source:</p>
+    <div class="install">git clone https://github.com/greqx/glape && cd glape && make</div>
+    <p>Requires GCC and GNU Make.</p>
+  </section>
+
+  <footer>
+    <span>Copyright &copy; 2026 greqx and Contributors</span>
+    <span>Apache License 2.0</span>
+  </footer>
+
+</div>
+</body>
+</html>
