@@ -6,8 +6,7 @@
 #include <ctype.h>
 #include "lexer.h"
 
-#define MAX_TOKENS 4096
-#define MAX_STR    512
+#define MAX_STR 512
 
 // color codes for error output
 #define COLOR_RESET  "\033[0m"
@@ -92,16 +91,25 @@ static int count_indent(Lexer *l) {
     return count;
 }
 
+static void tokens_push(Token **tokens, int *count, int *cap, Token t) {
+    if (*count >= *cap) {
+        *cap   *= 2;
+        *tokens = realloc(*tokens, sizeof(Token) * *cap);
+    }
+    (*tokens)[(*count)++] = t;
+}
+
 Token *lex(const char *src, int *out_count) {
     Lexer l;
-    l.src        = src;
-    l.pos        = 0;
-    l.line       = 1;
-    l.col        = 1;
-    l.indent_top = 0;
+    l.src             = src;
+    l.pos             = 0;
+    l.line            = 1;
+    l.col             = 1;
+    l.indent_top      = 0;
     l.indent_stack[0] = 0;
 
-    Token *tokens = malloc(sizeof(Token) * MAX_TOKENS);
+    int    cap    = 256;
+    Token *tokens = malloc(sizeof(Token) * cap);
     int    count  = 0;
 
     // tracks whether the previous token was a dot, for keyword suppression
@@ -144,16 +152,16 @@ Token *lex(const char *src, int *out_count) {
             // only emit NEWLINE when we're at the same indent level
             // (indent/dedent changes are structural, not newlines)
             if (indent == prev)
-                tokens[count++] = make_token(&l, TOK_NEWLINE, NULL);
+                tokens_push(&tokens, &count, &cap, make_token(&l, TOK_NEWLINE, NULL));
 
             if (indent > prev) {
                 l.indent_stack[++l.indent_top] = indent;
-                tokens[count++] = make_token(&l, TOK_INDENT, NULL);
+                tokens_push(&tokens, &count, &cap, make_token(&l, TOK_INDENT, NULL));
                 for (int i = 0; i < indent; i++) advance(&l);
             } else if (indent < prev) {
                 while (l.indent_stack[l.indent_top] > indent) {
                     l.indent_top--;
-                    tokens[count++] = make_token(&l, TOK_DEDENT, NULL);
+                    tokens_push(&tokens, &count, &cap, make_token(&l, TOK_DEDENT, NULL));
                 }
                 if (l.indent_stack[l.indent_top] != indent)
                     lex_error(&l, "inconsistent indentation");
@@ -184,7 +192,7 @@ Token *lex(const char *src, int *out_count) {
                 lex_error(&l, "unterminated string literal");
             advance(&l);
             buf[len] = '\0';
-            tokens[count++] = make_token(&l, TOK_STRING, buf);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_STRING, buf));
             after_dot = 0;
             continue;
         }
@@ -205,7 +213,7 @@ Token *lex(const char *src, int *out_count) {
                     buf[len++] = advance(&l);
             }
             buf[len] = '\0';
-            tokens[count++] = make_token(&l, is_flt ? TOK_FLOAT : TOK_INT, buf);
+            tokens_push(&tokens, &count, &cap, make_token(&l, is_flt ? TOK_FLOAT : TOK_INT, buf));
             after_dot = 0;
             continue;
         }
@@ -218,7 +226,7 @@ Token *lex(const char *src, int *out_count) {
                 buf[len++] = advance(&l);
             buf[len] = '\0';
             TokenType type = keyword_or_ident(buf, after_dot);
-            tokens[count++] = make_token(&l, type, buf);
+            tokens_push(&tokens, &count, &cap, make_token(&l, type, buf));
             after_dot = 0;
             continue;
         }
@@ -229,50 +237,50 @@ Token *lex(const char *src, int *out_count) {
 
         if (c == '.' && peek(&l) == '.' && peek2(&l) == '=') {
             advance(&l); advance(&l);
-            tokens[count++] = make_token(&l, TOK_RANGE_INCL, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_RANGE_INCL, NULL));
         } else if (c == '.' && peek(&l) == '.') {
             advance(&l);
-            tokens[count++] = make_token(&l, TOK_RANGE, NULL);
-        } else if (c == '.' ) {
-            tokens[count++] = make_token(&l, TOK_DOT, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_RANGE, NULL));
+        } else if (c == '.') {
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_DOT, NULL));
             after_dot = 1;
         } else if (c == '>' && peek(&l) == '>') {
             advance(&l);
-            tokens[count++] = make_token(&l, TOK_ARROW, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_ARROW, NULL));
         } else if (c == '>' && peek(&l) == '=') {
             advance(&l);
-            tokens[count++] = make_token(&l, TOK_GTE, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_GTE, NULL));
         } else if (c == '<' && peek(&l) == '=') {
             advance(&l);
-            tokens[count++] = make_token(&l, TOK_LTE, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_LTE, NULL));
         } else if (c == '=' && peek(&l) == '=') {
             advance(&l);
-            tokens[count++] = make_token(&l, TOK_EQ, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_EQ, NULL));
         } else if (c == '!' && peek(&l) == '=') {
             advance(&l);
-            tokens[count++] = make_token(&l, TOK_NEQ, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_NEQ, NULL));
         } else if (c == '=') {
-            tokens[count++] = make_token(&l, TOK_ASSIGN, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_ASSIGN, NULL));
         } else if (c == '>') {
-            tokens[count++] = make_token(&l, TOK_GT, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_GT, NULL));
         } else if (c == '<') {
-            tokens[count++] = make_token(&l, TOK_LT, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_LT, NULL));
         } else if (c == '+') {
-            tokens[count++] = make_token(&l, TOK_PLUS, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_PLUS, NULL));
         } else if (c == '-') {
-            tokens[count++] = make_token(&l, TOK_MINUS, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_MINUS, NULL));
         } else if (c == '*') {
-            tokens[count++] = make_token(&l, TOK_STAR, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_STAR, NULL));
         } else if (c == '/') {
-            tokens[count++] = make_token(&l, TOK_SLASH, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_SLASH, NULL));
         } else if (c == ':') {
-            tokens[count++] = make_token(&l, TOK_COLON, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_COLON, NULL));
         } else if (c == '(') {
-            tokens[count++] = make_token(&l, TOK_LPAREN, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_LPAREN, NULL));
         } else if (c == ')') {
-            tokens[count++] = make_token(&l, TOK_RPAREN, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_RPAREN, NULL));
         } else if (c == ',') {
-            tokens[count++] = make_token(&l, TOK_COMMA, NULL);
+            tokens_push(&tokens, &count, &cap, make_token(&l, TOK_COMMA, NULL));
         } else {
             char msg[64];
             snprintf(msg, sizeof(msg), "unknown character '%c'", c);
@@ -283,10 +291,10 @@ Token *lex(const char *src, int *out_count) {
     // emit remaining dedents
     while (l.indent_top > 0) {
         l.indent_top--;
-        tokens[count++] = make_token(&l, TOK_DEDENT, NULL);
+        tokens_push(&tokens, &count, &cap, make_token(&l, TOK_DEDENT, NULL));
     }
 
-    tokens[count++] = make_token(&l, TOK_EOF, NULL);
+    tokens_push(&tokens, &count, &cap, make_token(&l, TOK_EOF, NULL));
     *out_count = count;
     return tokens;
 }
