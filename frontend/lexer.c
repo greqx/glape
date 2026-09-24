@@ -9,18 +9,18 @@
 #define MAX_STR 512
 
 // color codes for error output
-#define COLOR_RESET  "\033[0m"
-#define COLOR_RED    "\033[91m"
-#define COLOR_WHITE  "\033[97m"
-#define COLOR_GREY   "\033[90m"
+#define COLOR_RESET "\033[0m"
+#define COLOR_RED "\033[91m"
+#define COLOR_WHITE "\033[97m"
+#define COLOR_GREY "\033[90m"
 
 typedef struct {
     const char *src;
-    int         pos;
-    int         line;
-    int         col;
-    int         indent_stack[256];
-    int         indent_top;
+    int pos;
+    int line;
+    int col;
+    int indent_stack[256];
+    int indent_top;
 } Lexer;
 
 static void lex_error(Lexer *l, const char *msg) {
@@ -53,10 +53,10 @@ static char advance(Lexer *l) {
 
 static Token make_token(Lexer *l, TokenType type, const char *value) {
     Token t;
-    t.type  = type;
+    t.type = type;
     t.value = value ? strdup(value) : NULL;
-    t.line  = l->line;
-    t.col   = l->col;
+    t.line = l->line;
+    t.col = l->col;
     return t;
 }
 
@@ -64,20 +64,20 @@ static Token make_token(Lexer *l, TokenType type, const char *value) {
 // words after a dot are never keywords
 static TokenType keyword_or_ident(const char *word, int after_dot) {
     if (after_dot) return TOK_IDENT;
-    if (strcmp(word, "get")    == 0) return TOK_GET;
-    if (strcmp(word, "immut")  == 0) return TOK_IMMUT;
+    if (strcmp(word, "get") == 0) return TOK_GET;
+    if (strcmp(word, "immut") == 0) return TOK_IMMUT;
     if (strcmp(word, "define") == 0) return TOK_DEFINE;
     if (strcmp(word, "return") == 0) return TOK_RETURN;
-    if (strcmp(word, "in")     == 0) return TOK_IN;
-    if (strcmp(word, "if")     == 0) return TOK_IF;
-    if (strcmp(word, "else")   == 0) return TOK_ELSE;
-    if (strcmp(word, "loop")   == 0) return TOK_LOOP;
-    if (strcmp(word, "true")   == 0) return TOK_TRUE;
-    if (strcmp(word, "false")  == 0) return TOK_FALSE;
-    if (strcmp(word, "int")    == 0) return TOK_TYPE_INT;
-    if (strcmp(word, "float")  == 0) return TOK_TYPE_FLOAT;
-    if (strcmp(word, "str")    == 0) return TOK_TYPE_STR;
-    if (strcmp(word, "bool")   == 0) return TOK_TYPE_BOOL;
+    if (strcmp(word, "in") == 0) return TOK_IN;
+    if (strcmp(word, "if") == 0) return TOK_IF;
+    if (strcmp(word, "else") == 0) return TOK_ELSE;
+    if (strcmp(word, "loop") == 0) return TOK_LOOP;
+    if (strcmp(word, "true") == 0) return TOK_TRUE;
+    if (strcmp(word, "false") == 0) return TOK_FALSE;
+    if (strcmp(word, "int") == 0) return TOK_TYPE_INT;
+    if (strcmp(word, "float") == 0) return TOK_TYPE_FLOAT;
+    if (strcmp(word, "str") == 0) return TOK_TYPE_STR;
+    if (strcmp(word, "bool") == 0) return TOK_TYPE_BOOL;
     return TOK_IDENT;
 }
 
@@ -93,7 +93,7 @@ static int count_indent(Lexer *l) {
 
 static void tokens_push(Token **tokens, int *count, int *cap, Token t) {
     if (*count >= *cap) {
-        *cap   *= 2;
+        *cap *= 2;
         *tokens = realloc(*tokens, sizeof(Token) * *cap);
     }
     (*tokens)[(*count)++] = t;
@@ -101,16 +101,16 @@ static void tokens_push(Token **tokens, int *count, int *cap, Token t) {
 
 Token *lex(const char *src, int *out_count) {
     Lexer l;
-    l.src             = src;
-    l.pos             = 0;
-    l.line            = 1;
-    l.col             = 1;
-    l.indent_top      = 0;
+    l.src = src;
+    l.pos = 0;
+    l.line = 1;
+    l.col = 1;
+    l.indent_top = 0;
     l.indent_stack[0] = 0;
 
-    int    cap    = 256;
+    int cap = 256;
     Token *tokens = malloc(sizeof(Token) * cap);
-    int    count  = 0;
+    int count = 0;
 
     // tracks whether the previous token was a dot, for keyword suppression
     int after_dot = 0;
@@ -147,7 +147,7 @@ Token *lex(const char *src, int *out_count) {
             if (peek(&l) == '\0') break;
 
             int indent = count_indent(&l);
-            int prev   = l.indent_stack[l.indent_top];
+            int prev = l.indent_stack[l.indent_top];
 
             // only emit NEWLINE when we're at the same indent level
             // (indent/dedent changes are structural, not newlines)
@@ -182,7 +182,7 @@ Token *lex(const char *src, int *out_count) {
         if (c == '"') {
             advance(&l);
             char buf[MAX_STR];
-            int  len = 0;
+            int len = 0;
             while (peek(&l) != '"' && peek(&l) != '\0') {
                 if (len >= MAX_STR - 1)
                     lex_error(&l, "string literal too long");
@@ -200,8 +200,8 @@ Token *lex(const char *src, int *out_count) {
         // number literal (int or float)
         if (isdigit(c)) {
             char buf[MAX_STR];
-            int  len    = 0;
-            int  is_flt = 0;
+            int len = 0;
+            int is_flt = 0;
             while (isdigit(peek(&l))) {
                 buf[len++] = advance(&l);
             }
@@ -221,7 +221,7 @@ Token *lex(const char *src, int *out_count) {
         // identifier or keyword
         if (isalpha(c) || c == '_') {
             char buf[MAX_STR];
-            int  len = 0;
+            int len = 0;
             while (isalnum(peek(&l)) || peek(&l) == '_')
                 buf[len++] = advance(&l);
             buf[len] = '\0';
@@ -302,49 +302,49 @@ Token *lex(const char *src, int *out_count) {
 // returns a human-readable name for a token type
 static const char *tok_name(TokenType t) {
     switch (t) {
-        case TOK_INT:        return "INT";
-        case TOK_FLOAT:      return "FLOAT";
-        case TOK_STRING:     return "STRING";
-        case TOK_TRUE:       return "TRUE";
-        case TOK_FALSE:      return "FALSE";
-        case TOK_IDENT:      return "IDENT";
-        case TOK_TYPE_INT:   return "TYPE_INT";
+        case TOK_INT: return "INT";
+        case TOK_FLOAT: return "FLOAT";
+        case TOK_STRING: return "STRING";
+        case TOK_TRUE: return "TRUE";
+        case TOK_FALSE: return "FALSE";
+        case TOK_IDENT: return "IDENT";
+        case TOK_TYPE_INT: return "TYPE_INT";
         case TOK_TYPE_FLOAT: return "TYPE_FLOAT";
-        case TOK_TYPE_STR:   return "TYPE_STR";
-        case TOK_TYPE_BOOL:  return "TYPE_BOOL";
-        case TOK_GET:        return "GET";
-        case TOK_IMMUT:      return "IMMUT";
-        case TOK_DEFINE:     return "DEFINE";
-        case TOK_RETURN:     return "RETURN";
-        case TOK_IN:         return "IN";
-        case TOK_IF:         return "IF";
-        case TOK_ELSE:       return "ELSE";
-        case TOK_LOOP:       return "LOOP";
-        case TOK_PLUS:       return "PLUS";
-        case TOK_MINUS:      return "MINUS";
-        case TOK_STAR:       return "STAR";
-        case TOK_SLASH:      return "SLASH";
-        case TOK_EQ:         return "EQ";
-        case TOK_NEQ:        return "NEQ";
-        case TOK_GT:         return "GT";
-        case TOK_LT:         return "LT";
-        case TOK_GTE:        return "GTE";
-        case TOK_LTE:        return "LTE";
-        case TOK_ASSIGN:     return "ASSIGN";
-        case TOK_COLON:      return "COLON";
-        case TOK_LPAREN:     return "LPAREN";
-        case TOK_RPAREN:     return "RPAREN";
-        case TOK_DOT:        return "DOT";
-        case TOK_RANGE:      return "RANGE";
+        case TOK_TYPE_STR: return "TYPE_STR";
+        case TOK_TYPE_BOOL: return "TYPE_BOOL";
+        case TOK_GET: return "GET";
+        case TOK_IMMUT: return "IMMUT";
+        case TOK_DEFINE: return "DEFINE";
+        case TOK_RETURN: return "RETURN";
+        case TOK_IN: return "IN";
+        case TOK_IF: return "IF";
+        case TOK_ELSE: return "ELSE";
+        case TOK_LOOP: return "LOOP";
+        case TOK_PLUS: return "PLUS";
+        case TOK_MINUS: return "MINUS";
+        case TOK_STAR: return "STAR";
+        case TOK_SLASH: return "SLASH";
+        case TOK_EQ: return "EQ";
+        case TOK_NEQ: return "NEQ";
+        case TOK_GT: return "GT";
+        case TOK_LT: return "LT";
+        case TOK_GTE: return "GTE";
+        case TOK_LTE: return "LTE";
+        case TOK_ASSIGN: return "ASSIGN";
+        case TOK_COLON: return "COLON";
+        case TOK_LPAREN: return "LPAREN";
+        case TOK_RPAREN: return "RPAREN";
+        case TOK_DOT: return "DOT";
+        case TOK_RANGE: return "RANGE";
         case TOK_RANGE_INCL: return "RANGE_INCL";
-        case TOK_ARROW:      return "ARROW";
-        case TOK_NEWLINE:    return "NEWLINE";
-        case TOK_INDENT:     return "INDENT";
-        case TOK_DEDENT:     return "DEDENT";
-        case TOK_COMMA:      return "COMMA";
-        case TOK_EOF:        return "EOF";
-        case TOK_UNKNOWN:    return "UNKNOWN";
-        default:             return "?";
+        case TOK_ARROW: return "ARROW";
+        case TOK_NEWLINE: return "NEWLINE";
+        case TOK_INDENT: return "INDENT";
+        case TOK_DEDENT: return "DEDENT";
+        case TOK_COMMA: return "COMMA";
+        case TOK_EOF: return "EOF";
+        case TOK_UNKNOWN: return "UNKNOWN";
+        default: return "?";
     }
 }
 

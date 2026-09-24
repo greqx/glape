@@ -10,11 +10,11 @@
 Chunk *chunk_new(void) {
     Chunk *c = calloc(1, sizeof(Chunk));
     c->string_cap = 16;
-    c->strings    = malloc(sizeof(char *) * c->string_cap);
-    c->func_cap   = 8;
-    c->funcs      = malloc(sizeof(GlapeFunc) * c->func_cap);
-    c->code_cap   = 64;
-    c->code       = malloc(c->code_cap);
+    c->strings = malloc(sizeof(char *) * c->string_cap);
+    c->func_cap = 8;
+    c->funcs = malloc(sizeof(GlapeFunc) * c->func_cap);
+    c->code_cap = 64;
+    c->code = malloc(c->code_cap);
     return c;
 }
 
@@ -77,13 +77,13 @@ uint32_t chunk_add_func(Chunk *c, const char *name) {
         c->func_cap *= 2;
         c->funcs = realloc(c->funcs, sizeof(GlapeFunc) * c->func_cap);
     }
-    GlapeFunc *f  = &c->funcs[c->func_count];
-    f->name        = strdup(name);
+    GlapeFunc *f = &c->funcs[c->func_count];
+    f->name = strdup(name);
     f->param_count = 0;
     f->param_names = NULL;
-    f->code_cap    = 64;
-    f->code_len    = 0;
-    f->code        = malloc(f->code_cap);
+    f->code_cap = 64;
+    f->code_len = 0;
+    f->code = malloc(f->code_cap);
     return c->func_count++;
 }
 
@@ -91,33 +91,33 @@ uint32_t chunk_add_func(Chunk *c, const char *name) {
 
 const char *opcode_name(Opcode op) {
     switch (op) {
-        case OP_PUSH_INT:    return "PUSH_INT";
-        case OP_PUSH_FLOAT:  return "PUSH_FLOAT";
-        case OP_PUSH_STR:    return "PUSH_STR";
-        case OP_PUSH_BOOL:   return "PUSH_BOOL";
-        case OP_POP:         return "POP";
-        case OP_LOAD:        return "LOAD";
-        case OP_STORE:       return "STORE";
+        case OP_PUSH_INT: return "PUSH_INT";
+        case OP_PUSH_FLOAT: return "PUSH_FLOAT";
+        case OP_PUSH_STR: return "PUSH_STR";
+        case OP_PUSH_BOOL: return "PUSH_BOOL";
+        case OP_POP: return "POP";
+        case OP_LOAD: return "LOAD";
+        case OP_STORE: return "STORE";
         case OP_STORE_IMMUT: return "STORE_IMMUT";
-        case OP_ADD:         return "ADD";
-        case OP_SUB:         return "SUB";
-        case OP_MUL:         return "MUL";
-        case OP_DIV:         return "DIV";
-        case OP_EQ:          return "EQ";
-        case OP_NEQ:         return "NEQ";
-        case OP_GT:          return "GT";
-        case OP_LT:          return "LT";
-        case OP_GTE:         return "GTE";
-        case OP_LTE:         return "LTE";
-        case OP_JUMP:        return "JUMP";
-        case OP_JUMP_IF:     return "JUMP_IF";
-        case OP_JUMP_IFNOT:  return "JUMP_IFNOT";
-        case OP_CALL:        return "CALL";
-        case OP_CALL_LIB:    return "CALL_LIB";
-        case OP_RET:         return "RET";
-        case OP_RET_VOID:    return "RET_VOID";
-        case OP_PRINT:       return "PRINT";
-        case OP_HALT:        return "HALT";
-        default:             return "?";
+        case OP_ADD: return "ADD";
+        case OP_SUB: return "SUB";
+        case OP_MUL: return "MUL";
+        case OP_DIV: return "DIV";
+        case OP_EQ: return "EQ";
+        case OP_NEQ: return "NEQ";
+        case OP_GT: return "GT";
+        case OP_LT: return "LT";
+        case OP_GTE: return "GTE";
+        case OP_LTE: return "LTE";
+        case OP_JUMP: return "JUMP";
+        case OP_JUMP_IF: return "JUMP_IF";
+        case OP_JUMP_IFNOT: return "JUMP_IFNOT";
+        case OP_CALL: return "CALL";
+        case OP_CALL_LIB: return "CALL_LIB";
+        case OP_RET: return "RET";
+        case OP_RET_VOID: return "RET_VOID";
+        case OP_PRINT: return "PRINT";
+        case OP_HALT: return "HALT";
+        default: return "?";
     }
 }

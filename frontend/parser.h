@@ -44,14 +44,14 @@ typedef struct Node Node;
 
 // function argument: name + type
 typedef struct {
-    char      *name;
-    GlapeType  type;
+    char *name;
+    GlapeType type;
 } Param;
 
 struct Node {
     NodeType type;
-    int      line;
-    int      col;
+    int line;
+    int col;
 
     union {
         // NODE_PROGRAM
@@ -62,10 +62,10 @@ struct Node {
 
         // NODE_VAR_DECL: x:int = expr  /  immut x:int = expr
         struct {
-            char      *name;
-            GlapeType  vtype;
-            int        immut;
-            Node      *value;
+            char *name;
+            GlapeType vtype;
+            int immut;
+            Node *value;
         } var_decl;
 
         // NODE_ASSIGN: x = expr
@@ -73,11 +73,11 @@ struct Node {
 
         // NODE_IF
         struct {
-            Node  *cond;
+            Node *cond;
             Node **body;
-            int    body_count;
+            int body_count;
             Node **else_body;
-            int    else_count;
+            int else_count;
         } if_stmt;
 
         // NODE_LOOP_INFINITE
@@ -85,29 +85,29 @@ struct Node {
 
         // NODE_LOOP_WHILE
         struct {
-            Node  *cond;
+            Node *cond;
             Node **body;
-            int    count;
+            int count;
         } loop_while;
 
         // NODE_LOOP_RANGE
         struct {
-            char  *var;
-            Node  *from;
-            Node  *to;
-            int    inclusive;
+            char *var;
+            Node *from;
+            Node *to;
+            int inclusive;
             Node **body;
-            int    count;
+            int count;
         } loop_range;
 
         // NODE_FUNC_DEF
         struct {
-            char      *name;
-            Param     *params;
-            int        param_count;
-            GlapeType  ret_type;
-            Node     **body;
-            int        body_count;
+            char *name;
+            Param *params;
+            int param_count;
+            GlapeType ret_type;
+            Node **body;
+            int body_count;
         } func_def;
 
         // NODE_RETURN
@@ -116,17 +116,17 @@ struct Node {
         // NODE_CALL_STMT / NODE_CALL_EXPR
         // object is NULL for plain calls, set for lib.func()
         struct {
-            char  *object;
-            char  *name;
+            char *object;
+            char *name;
             Node **args;
-            int    arg_count;
+            int arg_count;
         } call;
 
         // NODE_BINARY
         struct {
-            TokenType  op;
-            Node      *left;
-            Node      *right;
+            TokenType op;
+            Node *left;
+            Node *right;
         } binary;
 
         // NODE_INT_LIT
@@ -150,7 +150,7 @@ struct Node {
 };
 
 Node *parse(Token *tokens, int count);
-void  ast_dump(Node *root);
-void  node_free(Node *node);
+void ast_dump(Node *root);
+void node_free(Node *node);
 
 #endif

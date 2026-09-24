@@ -60,11 +60,11 @@ static char *read_file(const char *path) {
 }
 
 static void run_local(const char *path) {
-    char  *src    = read_file(path);
-    int    count;
+    char *src = read_file(path);
+    int count;
     Token *tokens = lex(src, &count);
-    Node  *ast    = parse(tokens, count);
-    Chunk *chunk  = compile(ast);
+    Node *ast = parse(tokens, count);
+    Chunk *chunk = compile(ast);
 
     VM *vm = vm_new();
 
@@ -209,16 +209,16 @@ int main(int argc, char *argv[]) {
     if (strcmp(argv[1], "gdl") == 0) {
         // glape gdl <folder> --output <file.gdl>
         // glape gdl <folder> --output <file.gdl> -sys --in <lib.so>
-        const char *folder   = NULL;
+        const char *folder = NULL;
         const char *out_path = NULL;
-        int         is_ffi   = 0;
+        int is_ffi = 0;
         (void)is_ffi;
 
         for (int i = 2; i < argc; i++) {
             if (strcmp(argv[i], "--output") == 0 && i+1 < argc) out_path = argv[++i];
-            else if (strcmp(argv[i], "-sys")    == 0) is_ffi  = 1;
-            else if (strcmp(argv[i], "--map")   == 0 && i+1 < argc) i++; // handled below
-            else if (strcmp(argv[i], "--in")    == 0 && i+1 < argc) i++;
+            else if (strcmp(argv[i], "-sys") == 0) is_ffi = 1;
+            else if (strcmp(argv[i], "--map") == 0 && i+1 < argc) i++; // handled below
+            else if (strcmp(argv[i], "--in") == 0 && i+1 < argc) i++;
             else if (!folder) folder = argv[i];
         }
 

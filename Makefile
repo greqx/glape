@@ -1,10 +1,10 @@
 # Copyright (c) 2026 greqx and Contributors
 
-CC     = gcc
+CC = gcc
 CFLAGS = -Wall -Wextra -O2
 LDFLAGS = -ldl
 
-BUILD  = build
+BUILD = build
 COMMON = frontend/lexer.c frontend/parser.c virtual/bytecode.c virtual/compiler.c virtual/vm.c virtual/gdl.c virtual/gffi.c
 
 all: $(BUILD)/glape $(BUILD)/glape-daemon

@@ -12,7 +12,7 @@
 #include "../frontend/lexer.h"
 #include "../frontend/parser.h"
 
-#define COLOR_RED   "\033[91m"
+#define COLOR_RED "\033[91m"
 #define COLOR_WHITE "\033[97m"
 #define COLOR_RESET "\033[0m"
 
@@ -118,7 +118,7 @@ static Chunk *read_chunk(FILE *f) {
         }
         if (r_u32(f, &fn->code_len) < 0) goto err;
         fn->code_cap = fn->code_len;
-        fn->code     = malloc(fn->code_len);
+        fn->code = malloc(fn->code_len);
         if (r_bytes(f, fn->code, fn->code_len) < 0) goto err;
     }
 
@@ -149,10 +149,10 @@ static Chunk *compile_file(const char *path) {
     src[sz] = '\0';
     fclose(f);
 
-    int    count;
+    int count;
     Token *tokens = lex(src, &count);
-    Node  *ast    = parse(tokens, count);
-    Chunk *chunk  = compile(ast);
+    Node *ast = parse(tokens, count);
+    Chunk *chunk = compile(ast);
 
     node_free(ast);
     lex_free(tokens, count);
@@ -179,8 +179,8 @@ int gdl_compile_folder(const char *folder, const char *out_path) {
 
     // collect .glape files
     char **glape_files = NULL;
-    int    glape_count = 0;
-    int    glape_cap   = 8;
+    int glape_count = 0;
+    int glape_cap = 8;
     glape_files = malloc(sizeof(char *) * glape_cap);
 
     struct dirent *entry;
@@ -208,10 +208,10 @@ int gdl_compile_folder(const char *folder, const char *out_path) {
     snprintf(libs_path, sizeof(libs_path), "%s/libs", folder);
     DIR *libs_dir = opendir(libs_path);
 
-    char  **dep_paths  = NULL;
-    char  **dep_names  = NULL;
-    int     dep_count  = 0;
-    int     dep_cap    = 8;
+    char **dep_paths = NULL;
+    char **dep_names = NULL;
+    int dep_count = 0;
+    int dep_cap = 8;
     dep_paths = malloc(sizeof(char *) * dep_cap);
     dep_names = malloc(sizeof(char *) * dep_cap);
 
@@ -277,7 +277,7 @@ int gdl_compile_folder(const char *folder, const char *out_path) {
         snprintf(path_buf, sizeof(path_buf), "%s/%s", folder, glape_files[i]);
 
         char *modname = module_name(glape_files[i]);
-        Chunk *chunk  = compile_file(path_buf);
+        Chunk *chunk = compile_file(path_buf);
         if (!chunk) {
             fprintf(stderr, COLOR_RED "error:" COLOR_RESET
                 " failed to compile '%s'\n", path_buf);
@@ -345,7 +345,7 @@ GdlLib *gdl_load(const char *path) {
 
     uint8_t version, type, r0, r1;
     r_u8(f, &version); r_u8(f, &type);
-    r_u8(f, &r0);      r_u8(f, &r1);
+    r_u8(f, &r0); r_u8(f, &r1);
 
     if (version != GDL_VERSION) {
         gdl_error("unsupported .gdl version"); fclose(f); return NULL;
@@ -357,10 +357,10 @@ GdlLib *gdl_load(const char *path) {
         uint32_t mc;
         r_u32(f, &mc);
         lib->module_count = mc;
-        lib->modules      = malloc(sizeof(GdlModule) * mc);
+        lib->modules = malloc(sizeof(GdlModule) * mc);
 
         for (uint32_t i = 0; i < mc; i++) {
-            lib->modules[i].name  = r_str(f);
+            lib->modules[i].name = r_str(f);
             lib->modules[i].chunk = read_chunk(f);
             if (!lib->modules[i].name || !lib->modules[i].chunk) {
                 gdl_error("corrupt module in .gdl");
@@ -382,13 +382,13 @@ GdlLib *gdl_load(const char *path) {
         }
 
     } else if (type == GDL_FFI) {
-        FfiLib *ffi   = calloc(1, sizeof(FfiLib));
-        ffi->so_path  = r_str(f);
+        FfiLib *ffi = calloc(1, sizeof(FfiLib));
+        ffi->so_path = r_str(f);
         r_u32(f, &ffi->symbol_count);
-        ffi->symbols  = calloc(ffi->symbol_count, sizeof(FfiSymbol));
+        ffi->symbols = calloc(ffi->symbol_count, sizeof(FfiSymbol));
         for (uint32_t i = 0; i < ffi->symbol_count; i++) {
             ffi->symbols[i].glape_name = r_str(f);
-            ffi->symbols[i].so_symbol  = r_str(f);
+            ffi->symbols[i].so_symbol = r_str(f);
             uint8_t ret;
             r_u8(f, &ret);
             ffi->symbols[i].ret_type = ret;
@@ -501,7 +501,7 @@ int gdl_write_ffi(const char *path, const char *so_path,
     for (uint32_t i = 0; i < count; i++) {
         w_str(f, symbols[i].glape_name);
         w_str(f, symbols[i].so_symbol);
-        w_u8(f, 0);  // ret = void
+        w_u8(f, 0); // ret = void
         w_u32(f, symbols[i].arg_count);
         for (uint32_t j = 0; j < symbols[i].arg_count; j++)
             w_u8(f, symbols[i].arg_types[j]);

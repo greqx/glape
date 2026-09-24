@@ -6,9 +6,9 @@
 #include <ctype.h>
 #include "gffi.h"
 
-#define COLOR_RED   "\033[91m"
+#define COLOR_RED "\033[91m"
 #define COLOR_WHITE "\033[97m"
-#define COLOR_GREY  "\033[90m"
+#define COLOR_GREY "\033[90m"
 #define COLOR_RESET "\033[0m"
 
 static void gffi_error(const char *path, int line, const char *msg) {
@@ -22,18 +22,18 @@ static void gffi_error(const char *path, int line, const char *msg) {
 const char *gffi_type_name(GffiType t) {
     switch (t) {
         case GFFI_VOID: return "void";
-        case GFFI_INT:  return "int";
-        case GFFI_STR:  return "str";
-        case GFFI_PTR:  return "ptr";
-        default:        return "?";
+        case GFFI_INT: return "int";
+        case GFFI_STR: return "str";
+        case GFFI_PTR: return "ptr";
+        default: return "?";
     }
 }
 
 static int parse_type(const char *s, GffiType *out) {
     if (strcmp(s, "void") == 0) { *out = GFFI_VOID; return 0; }
-    if (strcmp(s, "int")  == 0) { *out = GFFI_INT;  return 0; }
-    if (strcmp(s, "str")  == 0) { *out = GFFI_STR;  return 0; }
-    if (strcmp(s, "ptr")  == 0) { *out = GFFI_PTR;  return 0; }
+    if (strcmp(s, "int") == 0) { *out = GFFI_INT; return 0; }
+    if (strcmp(s, "str") == 0) { *out = GFFI_STR; return 0; }
+    if (strcmp(s, "ptr") == 0) { *out = GFFI_PTR; return 0; }
     return -1;
 }
 
@@ -62,12 +62,12 @@ GffiFile *gffi_parse(const char *path) {
     }
 
     GffiFile *gf = calloc(1, sizeof(GffiFile));
-    gf->cap   = 8;
+    gf->cap = 8;
     gf->funcs = malloc(sizeof(GffiFunc) * gf->cap);
 
     char line_buf[1024];
-    int  lineno = 0;
-    int  ok     = 1;
+    int lineno = 0;
+    int ok = 1;
 
     while (fgets(line_buf, sizeof(line_buf), f)) {
         lineno++;
@@ -157,12 +157,12 @@ GffiFile *gffi_parse(const char *path) {
             gf->cap *= 2;
             gf->funcs = realloc(gf->funcs, sizeof(GffiFunc) * gf->cap);
         }
-        GffiFunc *fn  = &gf->funcs[gf->count++];
-        fn->name      = strdup(name);
+        GffiFunc *fn = &gf->funcs[gf->count++];
+        fn->name = strdup(name);
         fn->so_symbol = so_symbol ? so_symbol : strdup(name);
-        fn->ret       = ret;
+        fn->ret = ret;
         fn->arg_count = argc;
-        fn->args      = argc > 0 ? malloc(sizeof(GffiArg) * argc) : NULL;
+        fn->args = argc > 0 ? malloc(sizeof(GffiArg) * argc) : NULL;
         for (uint32_t i = 0; i < argc; i++)
             fn->args[i] = args[i];
     }

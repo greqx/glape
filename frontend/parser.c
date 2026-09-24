@@ -6,14 +6,14 @@
 #include "parser.h"
 
 #define COLOR_RESET "\033[0m"
-#define COLOR_RED   "\033[91m"
+#define COLOR_RED "\033[91m"
 #define COLOR_WHITE "\033[97m"
-#define COLOR_GREY  "\033[90m"
+#define COLOR_GREY "\033[90m"
 
 typedef struct {
     Token *tokens;
-    int    count;
-    int    pos;
+    int count;
+    int pos;
 } Parser;
 
 static void parse_error(Parser *p, const char *msg) {
@@ -53,17 +53,17 @@ static Node *make_node(NodeType type, Token *tok) {
     Node *n = calloc(1, sizeof(Node));
     n->type = type;
     n->line = tok->line;
-    n->col  = tok->col;
+    n->col = tok->col;
     return n;
 }
 
 static GlapeType parse_type(Parser *p) {
     Token *t = peek(p);
     switch (t->type) {
-        case TOK_TYPE_INT:   advance(p); return TYPE_INT;
+        case TOK_TYPE_INT: advance(p); return TYPE_INT;
         case TOK_TYPE_FLOAT: advance(p); return TYPE_FLOAT;
-        case TOK_TYPE_STR:   advance(p); return TYPE_STR;
-        case TOK_TYPE_BOOL:  advance(p); return TYPE_BOOL;
+        case TOK_TYPE_STR: advance(p); return TYPE_STR;
+        case TOK_TYPE_BOOL: advance(p); return TYPE_BOOL;
         default: parse_error(p, "expected a type"); return TYPE_VOID;
     }
 }
@@ -76,8 +76,8 @@ static Node **parse_block(Parser *p, int *out_count) {
     if (check(p, TOK_NEWLINE)) advance(p);
     expect(p, TOK_INDENT, "expected indented block");
 
-    int    cap   = 8;
-    int    count = 0;
+    int cap = 8;
+    int count = 0;
     Node **stmts = malloc(sizeof(Node *) * cap);
 
     while (!check(p, TOK_DEDENT) && !check(p, TOK_EOF)) {
@@ -138,8 +138,8 @@ static Node *parse_primary(Parser *p) {
             Token *method = expect(p, TOK_IDENT, "expected method name after '.'");
             expect(p, TOK_LPAREN, "expected '(' after method name");
 
-            int    cap  = 4;
-            int    argc = 0;
+            int cap = 4;
+            int argc = 0;
             Node **args = malloc(sizeof(Node *) * cap);
 
             while (!check(p, TOK_RPAREN) && !check(p, TOK_EOF)) {
@@ -151,9 +151,9 @@ static Node *parse_primary(Parser *p) {
             expect(p, TOK_RPAREN, "expected ')'");
 
             Node *n = make_node(NODE_CALL_EXPR, tok);
-            n->call.object    = name;
-            n->call.name      = strdup(method->value);
-            n->call.args      = args;
+            n->call.object = name;
+            n->call.name = strdup(method->value);
+            n->call.args = args;
             n->call.arg_count = argc;
             return n;
         }
@@ -161,8 +161,8 @@ static Node *parse_primary(Parser *p) {
         // plain func() call
         if (check(p, TOK_LPAREN)) {
             advance(p);
-            int    cap  = 4;
-            int    argc = 0;
+            int cap = 4;
+            int argc = 0;
             Node **args = malloc(sizeof(Node *) * cap);
 
             while (!check(p, TOK_RPAREN) && !check(p, TOK_EOF)) {
@@ -174,9 +174,9 @@ static Node *parse_primary(Parser *p) {
             expect(p, TOK_RPAREN, "expected ')'");
 
             Node *n = make_node(NODE_CALL_EXPR, tok);
-            n->call.object    = NULL;
-            n->call.name      = name;
-            n->call.args      = args;
+            n->call.object = NULL;
+            n->call.name = name;
+            n->call.args = args;
             n->call.arg_count = argc;
             return n;
         }
@@ -195,16 +195,16 @@ static Node *parse_primary(Parser *p) {
 static int get_precedence(TokenType t) {
     switch (t) {
         case TOK_EQ:
-        case TOK_NEQ:  return 1;
+        case TOK_NEQ: return 1;
         case TOK_GT:
         case TOK_LT:
         case TOK_GTE:
-        case TOK_LTE:  return 2;
+        case TOK_LTE: return 2;
         case TOK_PLUS:
         case TOK_MINUS: return 3;
         case TOK_STAR:
         case TOK_SLASH: return 4;
-        default:        return 0;
+        default: return 0;
     }
 }
 
@@ -215,12 +215,12 @@ static Node *parse_binary(Parser *p, int min_prec) {
         int prec = get_precedence(peek(p)->type);
         if (prec < min_prec) break;
 
-        Token *op  = advance(p);
-        Node  *right = parse_binary(p, prec + 1);
+        Token *op = advance(p);
+        Node *right = parse_binary(p, prec + 1);
 
         Node *n = make_node(NODE_BINARY, op);
-        n->binary.op    = op->type;
-        n->binary.left  = left;
+        n->binary.op = op->type;
+        n->binary.left = left;
         n->binary.right = right;
         left = n;
     }
@@ -239,7 +239,7 @@ static Node *parse_stmt(Parser *p) {
     if (t->type == TOK_GET) {
         advance(p);
         Token *name = expect(p, TOK_IDENT, "expected library name after 'get'");
-        Node  *n    = make_node(NODE_IMPORT, t);
+        Node *n = make_node(NODE_IMPORT, t);
         n->import.name = strdup(name->value);
         skip_newlines(p);
         return n;
@@ -254,7 +254,7 @@ static Node *parse_stmt(Parser *p) {
         expect(p, TOK_ASSIGN, "expected '=' in variable declaration");
         Node *value = parse_expr(p);
         Node *n = make_node(NODE_VAR_DECL, t);
-        n->var_decl.name  = strdup(name->value);
+        n->var_decl.name = strdup(name->value);
         n->var_decl.vtype = vtype;
         n->var_decl.immut = 1;
         n->var_decl.value = value;
@@ -268,8 +268,8 @@ static Node *parse_stmt(Parser *p) {
         Node *cond = parse_expr(p);
         expect(p, TOK_COLON, "expected ':' after if condition");
 
-        int    body_count, else_count = 0;
-        Node **body      = parse_block(p, &body_count);
+        int body_count, else_count = 0;
+        Node **body = parse_block(p, &body_count);
         Node **else_body = NULL;
 
         skip_newlines(p);
@@ -280,10 +280,10 @@ static Node *parse_stmt(Parser *p) {
         }
 
         Node *n = make_node(NODE_IF, t);
-        n->if_stmt.cond       = cond;
-        n->if_stmt.body       = body;
+        n->if_stmt.cond = cond;
+        n->if_stmt.body = body;
         n->if_stmt.body_count = body_count;
-        n->if_stmt.else_body  = else_body;
+        n->if_stmt.else_body = else_body;
         n->if_stmt.else_count = else_count;
         return n;
     }
@@ -297,7 +297,7 @@ static Node *parse_stmt(Parser *p) {
             advance(p);
             int count; Node **body = parse_block(p, &count);
             Node *n = make_node(NODE_LOOP_INFINITE, t);
-            n->loop_inf.body  = body;
+            n->loop_inf.body = body;
             n->loop_inf.count = count;
             return n;
         }
@@ -318,12 +318,12 @@ static Node *parse_stmt(Parser *p) {
                 expect(p, TOK_COLON, "expected ':' after range");
                 int count; Node **body = parse_block(p, &count);
                 Node *n = make_node(NODE_LOOP_RANGE, t);
-                n->loop_range.var       = var;
-                n->loop_range.from      = from;
-                n->loop_range.to        = to;
+                n->loop_range.var = var;
+                n->loop_range.from = from;
+                n->loop_range.to = to;
                 n->loop_range.inclusive = inclusive;
-                n->loop_range.body      = body;
-                n->loop_range.count     = count;
+                n->loop_range.body = body;
+                n->loop_range.count = count;
                 return n;
             }
             // not a range loop, backtrack to while
@@ -336,8 +336,8 @@ static Node *parse_stmt(Parser *p) {
         expect(p, TOK_COLON, "expected ':' after loop condition");
         int count; Node **body = parse_block(p, &count);
         Node *n = make_node(NODE_LOOP_WHILE, t);
-        n->loop_while.cond  = cond;
-        n->loop_while.body  = body;
+        n->loop_while.cond = cond;
+        n->loop_while.body = body;
         n->loop_while.count = count;
         return n;
     }
@@ -348,9 +348,9 @@ static Node *parse_stmt(Parser *p) {
         Token *name = expect(p, TOK_IDENT, "expected function name");
         expect(p, TOK_LPAREN, "expected '('");
 
-        int   cap        = 4;
-        int   param_count = 0;
-        Param *params    = malloc(sizeof(Param) * cap);
+        int cap = 4;
+        int param_count = 0;
+        Param *params = malloc(sizeof(Param) * cap);
 
         while (!check(p, TOK_RPAREN) && !check(p, TOK_EOF)) {
             if (param_count >= cap) { cap *= 2; params = realloc(params, sizeof(Param) * cap); }
@@ -374,11 +374,11 @@ static Node *parse_stmt(Parser *p) {
 
         int body_count; Node **body = parse_block(p, &body_count);
         Node *n = make_node(NODE_FUNC_DEF, t);
-        n->func_def.name       = strdup(name->value);
-        n->func_def.params     = params;
+        n->func_def.name = strdup(name->value);
+        n->func_def.params = params;
         n->func_def.param_count = param_count;
-        n->func_def.ret_type   = ret;
-        n->func_def.body       = body;
+        n->func_def.ret_type = ret;
+        n->func_def.body = body;
         n->func_def.body_count = body_count;
         return n;
     }
@@ -397,8 +397,8 @@ static Node *parse_stmt(Parser *p) {
 
     // ident: var decl, assign, or call stmt
     if (t->type == TOK_IDENT) {
-        char  *name = strdup(t->value);
-        Token *tok  = t;
+        char *name = strdup(t->value);
+        Token *tok = t;
         advance(p);
 
         // lib.func() call statement
@@ -418,9 +418,9 @@ static Node *parse_stmt(Parser *p) {
             expect(p, TOK_RPAREN, "expected ')'");
 
             Node *n = make_node(NODE_CALL_STMT, tok);
-            n->call.object    = name;
-            n->call.name      = strdup(method->value);
-            n->call.args      = args;
+            n->call.object = name;
+            n->call.name = strdup(method->value);
+            n->call.args = args;
             n->call.arg_count = argc;
             skip_newlines(p);
             return n;
@@ -440,9 +440,9 @@ static Node *parse_stmt(Parser *p) {
             expect(p, TOK_RPAREN, "expected ')'");
 
             Node *n = make_node(NODE_CALL_STMT, tok);
-            n->call.object    = NULL;
-            n->call.name      = name;
-            n->call.args      = args;
+            n->call.object = NULL;
+            n->call.name = name;
+            n->call.args = args;
             n->call.arg_count = argc;
             skip_newlines(p);
             return n;
@@ -455,7 +455,7 @@ static Node *parse_stmt(Parser *p) {
             expect(p, TOK_ASSIGN, "expected '=' in variable declaration");
             Node *value = parse_expr(p);
             Node *n = make_node(NODE_VAR_DECL, tok);
-            n->var_decl.name  = name;
+            n->var_decl.name = name;
             n->var_decl.vtype = vtype;
             n->var_decl.immut = 0;
             n->var_decl.value = value;
@@ -468,7 +468,7 @@ static Node *parse_stmt(Parser *p) {
             advance(p);
             Node *value = parse_expr(p);
             Node *n = make_node(NODE_ASSIGN, tok);
-            n->assign.name  = name;
+            n->assign.name = name;
             n->assign.value = value;
             skip_newlines(p);
             return n;
@@ -484,13 +484,13 @@ static Node *parse_stmt(Parser *p) {
 Node *parse(Token *tokens, int count) {
     Parser p;
     p.tokens = tokens;
-    p.count  = count;
-    p.pos    = 0;
+    p.count = count;
+    p.pos = 0;
 
     skip_newlines(&p);
 
-    int    cap   = 16;
-    int    total = 0;
+    int cap = 16;
+    int total = 0;
     Node **stmts = malloc(sizeof(Node *) * cap);
 
     Token first = tokens[0];
@@ -514,9 +514,9 @@ void node_free(Node *n) {
             for (int i = 0; i < n->program.count; i++) node_free(n->program.stmts[i]);
             free(n->program.stmts);
             break;
-        case NODE_IMPORT:   free(n->import.name); break;
+        case NODE_IMPORT: free(n->import.name); break;
         case NODE_VAR_DECL: free(n->var_decl.name); node_free(n->var_decl.value); break;
-        case NODE_ASSIGN:   free(n->assign.name);  node_free(n->assign.value);  break;
+        case NODE_ASSIGN: free(n->assign.name); node_free(n->assign.value); break;
         case NODE_IF:
             node_free(n->if_stmt.cond);
             for (int i = 0; i < n->if_stmt.body_count; i++) node_free(n->if_stmt.body[i]);
@@ -559,8 +559,8 @@ void node_free(Node *n) {
             node_free(n->binary.left);
             node_free(n->binary.right);
             break;
-        case NODE_STR_LIT:  free(n->str_lit.val);  break;
-        case NODE_IDENT:    free(n->ident.name);    break;
+        case NODE_STR_LIT: free(n->str_lit.val); break;
+        case NODE_IDENT: free(n->ident.name); break;
         case NODE_RANGE:
             node_free(n->range.from);
             node_free(n->range.to);
@@ -572,12 +572,12 @@ void node_free(Node *n) {
 
 static const char *type_name(GlapeType t) {
     switch (t) {
-        case TYPE_INT:   return "int";
+        case TYPE_INT: return "int";
         case TYPE_FLOAT: return "float";
-        case TYPE_STR:   return "str";
-        case TYPE_BOOL:  return "bool";
-        case TYPE_VOID:  return "void";
-        default:         return "?";
+        case TYPE_STR: return "str";
+        case TYPE_BOOL: return "bool";
+        case TYPE_VOID: return "void";
+        default: return "?";
     }
 }
 
@@ -675,32 +675,32 @@ static void dump(Node *n, int depth) {
         case NODE_BINARY: {
             const char *op = "?";
             switch (n->binary.op) {
-                case TOK_PLUS:  op = "+";  break;
-                case TOK_MINUS: op = "-";  break;
-                case TOK_STAR:  op = "*";  break;
-                case TOK_SLASH: op = "/";  break;
-                case TOK_EQ:    op = "=="; break;
-                case TOK_NEQ:   op = "!="; break;
-                case TOK_GT:    op = ">";  break;
-                case TOK_LT:    op = "<";  break;
-                case TOK_GTE:   op = ">="; break;
-                case TOK_LTE:   op = "<="; break;
+                case TOK_PLUS: op = "+"; break;
+                case TOK_MINUS: op = "-"; break;
+                case TOK_STAR: op = "*"; break;
+                case TOK_SLASH: op = "/"; break;
+                case TOK_EQ: op = "=="; break;
+                case TOK_NEQ: op = "!="; break;
+                case TOK_GT: op = ">"; break;
+                case TOK_LT: op = "<"; break;
+                case TOK_GTE: op = ">="; break;
+                case TOK_LTE: op = "<="; break;
                 default: break;
             }
             printf("Binary %s\n", op);
-            dump(n->binary.left,  depth + 1);
+            dump(n->binary.left, depth + 1);
             dump(n->binary.right, depth + 1);
             break;
         }
-        case NODE_INT_LIT:   printf("Int %lld\n",  n->int_lit.val);   break;
-        case NODE_FLOAT_LIT: printf("Float %g\n",  n->float_lit.val); break;
-        case NODE_STR_LIT:   printf("Str \"%s\"\n", n->str_lit.val);  break;
-        case NODE_BOOL_LIT:  printf("Bool %s\n",   n->bool_lit.val ? "true" : "false"); break;
-        case NODE_IDENT:     printf("Ident %s\n",  n->ident.name);    break;
+        case NODE_INT_LIT: printf("Int %lld\n", n->int_lit.val); break;
+        case NODE_FLOAT_LIT: printf("Float %g\n", n->float_lit.val); break;
+        case NODE_STR_LIT: printf("Str \"%s\"\n", n->str_lit.val); break;
+        case NODE_BOOL_LIT: printf("Bool %s\n", n->bool_lit.val ? "true" : "false"); break;
+        case NODE_IDENT: printf("Ident %s\n", n->ident.name); break;
         case NODE_RANGE:
             printf("Range %s\n", n->range.inclusive ? "..=" : "..");
             dump(n->range.from, depth + 1);
-            dump(n->range.to,   depth + 1);
+            dump(n->range.to, depth + 1);
             break;
         default:
             printf("Unknown node %d\n", n->type);

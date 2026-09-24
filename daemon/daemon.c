@@ -20,9 +20,9 @@
 #include "../virtual/vm.h"
 
 #define COLOR_RESET "\033[0m"
-#define COLOR_RED   "\033[91m"
+#define COLOR_RED "\033[91m"
 #define COLOR_WHITE "\033[97m"
-#define COLOR_GREY  "\033[90m"
+#define COLOR_GREY "\033[90m"
 
 static Daemon g_daemon;
 
@@ -37,8 +37,8 @@ static void init_paths(void) {
     if (!home) home = "/tmp";
     // sun_path is limited to 108 bytes on Linux, keep path short
     snprintf(g_sock_path, sizeof(g_sock_path), "%s/.glape/d.sock", home);
-    snprintf(g_pid_path,  sizeof(g_pid_path),  "%s/.glape/d.pid",  home);
-    snprintf(g_log_path,  sizeof(g_log_path),  "%s/.glape/d.log",  home);
+    snprintf(g_pid_path, sizeof(g_pid_path), "%s/.glape/d.pid", home);
+    snprintf(g_log_path, sizeof(g_log_path), "%s/.glape/d.log", home);
 
     // ensure ~/.glape/ exists
     char dir[512];
@@ -170,10 +170,10 @@ static int recv_msg(int fd, MsgHeader *hdr, char **payload) {
 
 static void run_script_for_client(const char *src, int fd) {
     (void)fd;
-    int    count;
+    int count;
     Token *tokens = lex(src, &count);
-    Node  *ast    = parse(tokens, count);
-    Chunk *chunk  = compile(ast);
+    Node *ast = parse(tokens, count);
+    Chunk *chunk = compile(ast);
 
     VM *vm = vm_new();
     vm_run(vm, chunk);
@@ -189,11 +189,11 @@ static void run_script_for_client(const char *src, int fd) {
 static void daemon_loop(void) {
     signal(SIGCHLD, on_sigchld);
     signal(SIGTERM, on_sigterm);
-    signal(SIGINT,  on_sigterm);
-    signal(SIGPIPE, SIG_IGN);  // ignore broken pipe from clients
+    signal(SIGINT, on_sigterm);
+    signal(SIGPIPE, SIG_IGN); // ignore broken pipe from clients
 
-    g_daemon.sock_fd      = sock_create();
-    g_daemon.running      = 1;
+    g_daemon.sock_fd = sock_create();
+    g_daemon.running = 1;
     g_daemon.script_count = 0;
 
     if (g_daemon.sock_fd < 0) {
@@ -270,9 +270,9 @@ static void daemon_loop(void) {
                 close(notify[0]);
 
                 if (g_daemon.script_count < DAEMON_MAX_SCRIPTS) {
-                    g_daemon.scripts[g_daemon.script_count].pid        = pid;
+                    g_daemon.scripts[g_daemon.script_count].pid = pid;
                     g_daemon.scripts[g_daemon.script_count].script_pid = script_pid;
-                    g_daemon.scripts[g_daemon.script_count].client_fd  = client_fd;
+                    g_daemon.scripts[g_daemon.script_count].client_fd = client_fd;
                     g_daemon.script_count++;
                 }
                 close(client_fd);
@@ -300,7 +300,7 @@ static void daemon_loop(void) {
                 }
                 case MSG_LIST: {
                     char buf[4096];
-                    int  off = 0;
+                    int off = 0;
                     for (int i = 0; i < g_daemon.script_count; i++) {
                         if (kill(g_daemon.scripts[i].script_pid, 0) == 0) {
                             off += snprintf(buf + off, sizeof(buf) - off,
@@ -430,7 +430,7 @@ int daemon_send_run(const char *src, const char *path) {
     // read output until MSG_DONE
     while (1) {
         MsgHeader hdr;
-        char     *payload = NULL;
+        char *payload = NULL;
         if (recv_msg(fd, &hdr, &payload) < 0) break;
         if (hdr.type == MSG_OUTPUT && payload)
             printf("%s", payload);

@@ -8,9 +8,9 @@
 #include "gdl.h"
 #include "gffi.h"
 
-#define COLOR_RED   "\033[91m"
+#define COLOR_RED "\033[91m"
 #define COLOR_WHITE "\033[97m"
-#define COLOR_GREY  "\033[90m"
+#define COLOR_GREY "\033[90m"
 #define COLOR_RESET "\033[0m"
 
 static void vm_error(const char *msg) {
@@ -23,9 +23,9 @@ static void vm_error(const char *msg) {
 // ── scope ──────────────────────────────────────────────────────────────────
 
 static Scope *scope_new(Scope *parent) {
-    Scope *s  = calloc(1, sizeof(Scope));
-    s->cap    = 8;
-    s->slots  = malloc(sizeof(Slot) * s->cap);
+    Scope *s = calloc(1, sizeof(Scope));
+    s->cap = 8;
+    s->slots = malloc(sizeof(Slot) * s->cap);
     s->parent = parent;
     return s;
 }
@@ -62,8 +62,8 @@ static void scope_set(Scope *s, const char *name, Value val, int immut) {
         s->cap *= 2;
         s->slots = realloc(s->slots, sizeof(Slot) * s->cap);
     }
-    s->slots[s->count].name  = (char *)name; // string from chunk, stable
-    s->slots[s->count].val   = val;
+    s->slots[s->count].name = (char *)name; // string from chunk, stable
+    s->slots[s->count].val = val;
     s->slots[s->count].immut = immut;
     s->count++;
 }
@@ -84,29 +84,29 @@ static Value pop(VM *vm) {
 
 // ── value helpers ──────────────────────────────────────────────────────────
 
-static Value val_int(int64_t v)    { Value r; r.type=VAL_INT;   r.ival=v; return r; }
-static Value val_float(double v)   { Value r; r.type=VAL_FLOAT; r.fval=v; return r; }
-static Value val_bool(int v)       { Value r; r.type=VAL_BOOL;  r.bval=v; return r; }
-static Value val_void(void)        { Value r; r.type=VAL_VOID;            return r; }
-static Value val_str(char *s)      { Value r; r.type=VAL_STR;   r.sval=s; return r; }
+static Value val_int(int64_t v) { Value r; r.type=VAL_INT; r.ival=v; return r; }
+static Value val_float(double v) { Value r; r.type=VAL_FLOAT; r.fval=v; return r; }
+static Value val_bool(int v) { Value r; r.type=VAL_BOOL; r.bval=v; return r; }
+static Value val_void(void) { Value r; r.type=VAL_VOID; return r; }
+static Value val_str(char *s) { Value r; r.type=VAL_STR; r.sval=s; return r; }
 
 static int is_truthy(Value v) {
     switch (v.type) {
-        case VAL_BOOL:  return v.bval;
-        case VAL_INT:   return v.ival != 0;
+        case VAL_BOOL: return v.bval;
+        case VAL_INT: return v.ival != 0;
         case VAL_FLOAT: return v.fval != 0.0;
-        case VAL_STR:   return v.sval && v.sval[0];
-        default:        return 0;
+        case VAL_STR: return v.sval && v.sval[0];
+        default: return 0;
     }
 }
 
 static void print_value(Value v) {
     switch (v.type) {
-        case VAL_INT:   printf("%lld\n", (long long)v.ival); break;
-        case VAL_FLOAT: printf("%g\n",   v.fval);            break;
-        case VAL_STR:   printf("%s\n",   v.sval);            break;
-        case VAL_BOOL:  printf("%s\n",   v.bval?"true":"false"); break;
-        case VAL_VOID:  break;
+        case VAL_INT: printf("%lld\n", (long long)v.ival); break;
+        case VAL_FLOAT: printf("%g\n", v.fval); break;
+        case VAL_STR: printf("%s\n", v.sval); break;
+        case VAL_BOOL: printf("%s\n", v.bval?"true":"false"); break;
+        case VAL_VOID: break;
     }
     fflush(stdout);
 }
@@ -191,15 +191,15 @@ static Value exec(VM *vm, uint8_t *code, uint32_t len, Scope *scope) {
 
             case OP_STORE:
             case OP_STORE_IMMUT: {
-                uint32_t idx   = read_u32(code, &ip);
+                uint32_t idx = read_u32(code, &ip);
                 const char *name = vm->chunk->strings[idx];
-                Value v        = pop(vm);
+                Value v = pop(vm);
                 scope_set(scope, name, v, op == OP_STORE_IMMUT);
                 break;
             }
 
             case OP_ADD: case OP_SUB: case OP_MUL: case OP_DIV:
-            case OP_EQ:  case OP_NEQ: case OP_GT:  case OP_LT:
+            case OP_EQ: case OP_NEQ: case OP_GT: case OP_LT:
             case OP_GTE: case OP_LTE: {
                 Value r = pop(vm);
                 Value l = pop(vm);
@@ -211,16 +211,16 @@ static Value exec(VM *vm, uint8_t *code, uint32_t len, Scope *scope) {
 
                 switch (op) {
                     case OP_ADD:
-                        if (l.type==VAL_INT)   push(vm, val_int(l.ival + r.ival));
-                        else                   push(vm, val_float(l.fval + r.fval));
+                        if (l.type==VAL_INT) push(vm, val_int(l.ival + r.ival));
+                        else push(vm, val_float(l.fval + r.fval));
                         break;
                     case OP_SUB:
-                        if (l.type==VAL_INT)   push(vm, val_int(l.ival - r.ival));
-                        else                   push(vm, val_float(l.fval - r.fval));
+                        if (l.type==VAL_INT) push(vm, val_int(l.ival - r.ival));
+                        else push(vm, val_float(l.fval - r.fval));
                         break;
                     case OP_MUL:
-                        if (l.type==VAL_INT)   push(vm, val_int(l.ival * r.ival));
-                        else                   push(vm, val_float(l.fval * r.fval));
+                        if (l.type==VAL_INT) push(vm, val_int(l.ival * r.ival));
+                        else push(vm, val_float(l.fval * r.fval));
                         break;
                     case OP_DIV:
                         if (l.type==VAL_INT) {
@@ -232,15 +232,15 @@ static Value exec(VM *vm, uint8_t *code, uint32_t len, Scope *scope) {
                         }
                         break;
                     case OP_EQ:
-                        if (l.type==VAL_INT)   push(vm, val_bool(l.ival == r.ival));
+                        if (l.type==VAL_INT) push(vm, val_bool(l.ival == r.ival));
                         else if (l.type==VAL_FLOAT) push(vm, val_bool(l.fval == r.fval));
-                        else if (l.type==VAL_BOOL)  push(vm, val_bool(l.bval == r.bval));
+                        else if (l.type==VAL_BOOL) push(vm, val_bool(l.bval == r.bval));
                         else push(vm, val_bool(strcmp(l.sval, r.sval)==0));
                         break;
                     case OP_NEQ:
-                        if (l.type==VAL_INT)   push(vm, val_bool(l.ival != r.ival));
+                        if (l.type==VAL_INT) push(vm, val_bool(l.ival != r.ival));
                         else if (l.type==VAL_FLOAT) push(vm, val_bool(l.fval != r.fval));
-                        else if (l.type==VAL_BOOL)  push(vm, val_bool(l.bval != r.bval));
+                        else if (l.type==VAL_BOOL) push(vm, val_bool(l.bval != r.bval));
                         else push(vm, val_bool(strcmp(l.sval, r.sval)!=0));
                         break;
                     case OP_GT:
@@ -286,7 +286,7 @@ static Value exec(VM *vm, uint8_t *code, uint32_t len, Scope *scope) {
 
             case OP_CALL: {
                 uint32_t fn_idx = read_u32(code, &ip);
-                uint8_t  argc   = read_u8(code,  &ip);
+                uint8_t argc = read_u8(code, &ip);
                 const char *name = vm->chunk->strings[fn_idx];
 
                 // find function in chunk
@@ -326,11 +326,11 @@ static Value exec(VM *vm, uint8_t *code, uint32_t len, Scope *scope) {
 
             case OP_CALL_LIB: {
                 uint32_t lib_idx = read_u32(code, &ip);
-                uint32_t fn_idx  = read_u32(code, &ip);
-                uint8_t  argc    = read_u8(code,  &ip);
+                uint32_t fn_idx = read_u32(code, &ip);
+                uint8_t argc = read_u8(code, &ip);
 
                 const char *lib_name = vm->chunk->strings[lib_idx];
-                const char *fn_name  = vm->chunk->strings[fn_idx];
+                const char *fn_name = vm->chunk->strings[fn_idx];
 
                 // find library
                 GdlLib *lib = NULL;
@@ -372,7 +372,7 @@ static Value exec(VM *vm, uint8_t *code, uint32_t len, Scope *scope) {
                     // type-safe dispatch via function pointer cast
                     // covers the most common C signatures
                     GffiType rt = (GffiType)sym->ret_type;
-                    Value ret   = val_void();
+                    Value ret = val_void();
 
                     #define A0t ((GffiType)sym->arg_types[0])
                     #define A1t ((GffiType)sym->arg_types[1])
@@ -439,13 +439,13 @@ static Value exec(VM *vm, uint8_t *code, uint32_t len, Scope *scope) {
                 }
 
                 // bytecode library - search all modules
-                GlapeFunc *fn     = NULL;
-                Chunk     *fn_chunk = NULL;
+                GlapeFunc *fn = NULL;
+                Chunk *fn_chunk = NULL;
                 for (uint32_t m = 0; m < lib->module_count; m++) {
                     Chunk *mc = lib->modules[m].chunk;
                     for (uint32_t f = 0; f < mc->func_count; f++) {
                         if (strcmp(mc->funcs[f].name, fn_name) == 0) {
-                            fn       = &mc->funcs[f];
+                            fn = &mc->funcs[f];
                             fn_chunk = mc;
                             break;
                         }
@@ -511,7 +511,7 @@ static Value exec(VM *vm, uint8_t *code, uint32_t len, Scope *scope) {
 // ── public api ─────────────────────────────────────────────────────────────
 
 VM *vm_new(void) {
-    VM *vm     = calloc(1, sizeof(VM));
+    VM *vm = calloc(1, sizeof(VM));
     vm->global = scope_new(NULL);
     return vm;
 }
@@ -522,12 +522,12 @@ void vm_load_lib(VM *vm, const char *name, GdlLib *lib) {
         return;
     }
     vm->lib_names[vm->lib_count] = strdup(name);
-    vm->libs[vm->lib_count]      = lib;
+    vm->libs[vm->lib_count] = lib;
     vm->lib_count++;
 }
 
 void vm_run(VM *vm, Chunk *chunk) {
-    vm->chunk     = chunk;
+    vm->chunk = chunk;
     vm->stack_top = 0;
     exec(vm, chunk->code, chunk->code_len, vm->global);
 }

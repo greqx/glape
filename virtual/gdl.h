@@ -7,44 +7,44 @@
 #include "bytecode.h"
 #include "gffi.h"
 
-#define GDL_MAGIC   "GDLX"
+#define GDL_MAGIC "GDLX"
 #define GDL_VERSION 1
 
 typedef enum {
     GDL_BYTECODE = 0,
-    GDL_FFI      = 1,
+    GDL_FFI = 1,
 } GdlType;
 
 // one module inside a .gdl (one .glape file from the library folder)
 typedef struct {
-    char  *name;   // module name (filename without .glape)
+    char *name; // module name (filename without .glape)
     Chunk *chunk;
 } GdlModule;
 
 // FFI symbol: glape name -> symbol in .so + type signature
 typedef struct {
-    char     *glape_name;
-    char     *so_symbol;
-    uint8_t  *arg_types;   // GffiType values for each arg
-    uint32_t  arg_count;
-    uint8_t   ret_type;    // GffiType return value
-    void     *fn_ptr;      // filled at load time by dlsym
+    char *glape_name;
+    char *so_symbol;
+    uint8_t *arg_types; // GffiType values for each arg
+    uint32_t arg_count;
+    uint8_t ret_type; // GffiType return value
+    void *fn_ptr; // filled at load time by dlsym
 } FfiSymbol;
 
 // loaded FFI library
 typedef struct {
-    char      *so_path;
+    char *so_path;
     FfiSymbol *symbols;
-    uint32_t   symbol_count;
-    void      *dl_handle;
+    uint32_t symbol_count;
+    void *dl_handle;
 } FfiLib;
 
 // a full loaded .gdl library
 typedef struct {
-    char      *name;          // library name (e.g. "mylib")
-    GdlModule *modules;       // one per .glape file
-    uint32_t   module_count;
-    FfiLib    *ffi;           // non-NULL if GDL_FFI
+    char *name; // library name (e.g. "mylib")
+    GdlModule *modules; // one per .glape file
+    uint32_t module_count;
+    FfiLib *ffi; // non-NULL if GDL_FFI
 } GdlLib;
 
 // compile a library folder into a .gdl file

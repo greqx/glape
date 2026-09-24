@@ -5,17 +5,17 @@
 #include <string.h>
 #include "compiler.h"
 
-#define COLOR_RED   "\033[91m"
+#define COLOR_RED "\033[91m"
 #define COLOR_WHITE "\033[97m"
-#define COLOR_GREY  "\033[90m"
+#define COLOR_GREY "\033[90m"
 #define COLOR_RESET "\033[0m"
 
 // ── compiler state ─────────────────────────────────────────────────────────
 
 typedef struct {
-    Chunk    *chunk;
-    int       in_func;     // are we inside a function body?
-    uint32_t  func_idx;    // current function index
+    Chunk *chunk;
+    int in_func; // are we inside a function body?
+    uint32_t func_idx; // current function index
 } Compiler;
 
 static void comp_error(const char *msg, int line, int col) {
@@ -44,8 +44,8 @@ static void emit_u8(Compiler *c, uint8_t v) {
 
 // emit a uint32 little-endian
 static void emit_u32(Compiler *c, uint32_t v) {
-    emit(c, (v      ) & 0xff);
-    emit(c, (v >>  8) & 0xff);
+    emit(c, (v ) & 0xff);
+    emit(c, (v >> 8) & 0xff);
     emit(c, (v >> 16) & 0xff);
     emit(c, (v >> 24) & 0xff);
 }
@@ -81,8 +81,8 @@ static void patch_i32(Compiler *c, uint32_t offset, int32_t v) {
     uint8_t *code = c->in_func
         ? c->chunk->funcs[c->func_idx].code
         : c->chunk->code;
-    code[offset    ] = (v      ) & 0xff;
-    code[offset + 1] = (v >>  8) & 0xff;
+    code[offset ] = (v ) & 0xff;
+    code[offset + 1] = (v >> 8) & 0xff;
     code[offset + 2] = (v >> 16) & 0xff;
     code[offset + 3] = (v >> 24) & 0xff;
 }
@@ -129,16 +129,16 @@ static void compile_expr(Compiler *c, Node *n) {
             compile_expr(c, n->binary.left);
             compile_expr(c, n->binary.right);
             switch (n->binary.op) {
-                case TOK_PLUS:  emit(c, OP_ADD); break;
+                case TOK_PLUS: emit(c, OP_ADD); break;
                 case TOK_MINUS: emit(c, OP_SUB); break;
-                case TOK_STAR:  emit(c, OP_MUL); break;
+                case TOK_STAR: emit(c, OP_MUL); break;
                 case TOK_SLASH: emit(c, OP_DIV); break;
-                case TOK_EQ:    emit(c, OP_EQ);  break;
-                case TOK_NEQ:   emit(c, OP_NEQ); break;
-                case TOK_GT:    emit(c, OP_GT);  break;
-                case TOK_LT:    emit(c, OP_LT);  break;
-                case TOK_GTE:   emit(c, OP_GTE); break;
-                case TOK_LTE:   emit(c, OP_LTE); break;
+                case TOK_EQ: emit(c, OP_EQ); break;
+                case TOK_NEQ: emit(c, OP_NEQ); break;
+                case TOK_GT: emit(c, OP_GT); break;
+                case TOK_LT: emit(c, OP_LT); break;
+                case TOK_GTE: emit(c, OP_GTE); break;
+                case TOK_LTE: emit(c, OP_LTE); break;
                 default:
                     comp_error("unknown binary operator", n->line, n->col);
             }
@@ -153,7 +153,7 @@ static void compile_expr(Compiler *c, Node *n) {
             if (n->call.object) {
                 // lib.func() call
                 uint32_t lib_idx = chunk_intern(c->chunk, n->call.object);
-                uint32_t fn_idx  = chunk_intern(c->chunk, n->call.name);
+                uint32_t fn_idx = chunk_intern(c->chunk, n->call.name);
                 emit(c, OP_CALL_LIB);
                 emit_u32(c, lib_idx);
                 emit_u32(c, fn_idx);
@@ -323,9 +323,9 @@ static void compile_stmt(Compiler *c, Node *n) {
                 f->param_names[i] = strdup(n->func_def.params[i].name);
 
             // compile body inside function context
-            int saved_in_func   = c->in_func;
-            uint32_t saved_fi   = c->func_idx;
-            c->in_func  = 1;
+            int saved_in_func = c->in_func;
+            uint32_t saved_fi = c->func_idx;
+            c->in_func = 1;
             c->func_idx = fi;
 
             for (int i = 0; i < n->func_def.body_count; i++)
@@ -334,7 +334,7 @@ static void compile_stmt(Compiler *c, Node *n) {
             // ensure function ends with RET_VOID
             emit(c, OP_RET_VOID);
 
-            c->in_func  = saved_in_func;
+            c->in_func = saved_in_func;
             c->func_idx = saved_fi;
             break;
         }
@@ -355,7 +355,7 @@ static void compile_stmt(Compiler *c, Node *n) {
 
             if (n->call.object) {
                 uint32_t lib_idx = chunk_intern(c->chunk, n->call.object);
-                uint32_t fn_idx  = chunk_intern(c->chunk, n->call.name);
+                uint32_t fn_idx = chunk_intern(c->chunk, n->call.name);
                 emit(c, OP_CALL_LIB);
                 emit_u32(c, lib_idx);
                 emit_u32(c, fn_idx);
@@ -384,8 +384,8 @@ Chunk *compile(Node *program) {
     if (program->type != NODE_PROGRAM) return NULL;
 
     Compiler c;
-    c.chunk    = chunk_new();
-    c.in_func  = 0;
+    c.chunk = chunk_new();
+    c.in_func = 0;
     c.func_idx = 0;
 
     for (int i = 0; i < program->program.count; i++)
@@ -438,7 +438,7 @@ static void disasm_code(Chunk *chunk, uint8_t *code, uint32_t len, const char *l
             }
             case OP_CALL: {
                 uint32_t fi; memcpy(&fi, &code[ip], 4); ip += 4;
-                uint8_t  ac = code[ip++];
+                uint8_t ac = code[ip++];
                 printf("  %u (%s)  argc=%u", fi,
                     fi < chunk->string_count ? chunk->strings[fi] : "?", ac);
                 break;
@@ -446,7 +446,7 @@ static void disasm_code(Chunk *chunk, uint8_t *code, uint32_t len, const char *l
             case OP_CALL_LIB: {
                 uint32_t li; memcpy(&li, &code[ip], 4); ip += 4;
                 uint32_t fi; memcpy(&fi, &code[ip], 4); ip += 4;
-                uint8_t  ac = code[ip++];
+                uint8_t ac = code[ip++];
                 printf("  %s.%s  argc=%u",
                     li < chunk->string_count ? chunk->strings[li] : "?",
                     fi < chunk->string_count ? chunk->strings[fi] : "?", ac);

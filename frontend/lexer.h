@@ -64,13 +64,13 @@ typedef enum {
 
 typedef struct {
     TokenType type;
-    char     *value;
-    int       line;
-    int       col;
+    char *value;
+    int line;
+    int col;
 } Token;
 
 Token *lex(const char *src, int *out_count);
-void   lex_dump(Token *tokens, int count);
-void   lex_free(Token *tokens, int count);
+void lex_dump(Token *tokens, int count);
+void lex_free(Token *tokens, int count);
 
 #endif
